@@ -76,7 +76,7 @@ public class SmallChat_Server {
                 client.nick = newName;
                 channel.write(ByteBuffer.wrap(String.format("your nickname change to %s\n", newName).getBytes()));
             }else{
-                channel.write(ByteBuffer.wrap("unknown command".getBytes()));
+                channel.write(ByteBuffer.wrap("unknown command\n".getBytes()));
             }
         }else{
             broadcastMsg(channel, msg);
@@ -89,7 +89,7 @@ public class SmallChat_Server {
             if (c == channel) {
                 continue;
             }
-            c.write(ByteBuffer.wrap(String.format("%s>%s", send.nick, msg).getBytes()));
+            c.write(ByteBuffer.wrap(String.format("%s>%s\n", send.nick, msg).getBytes()));
         }
     }
 
