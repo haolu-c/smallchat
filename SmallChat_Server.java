@@ -25,7 +25,7 @@ public class SmallChat_Server {
             channel.bind(new InetSocketAddress(PORT));
             channel.configureBlocking(false);
             channel.register(selector, SelectionKey.OP_ACCEPT);
-
+            System.out.println("SmallChat is online");
             while (true){
                 selector.select();
                 Set<SelectionKey> selectionKeys = selector.selectedKeys();
@@ -48,27 +48,30 @@ public class SmallChat_Server {
     private void receiveMsg(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
 
-        ByteBuffer buffer = ByteBuffer.allocate(127);
-        int read = channel.read(buffer);
+        ByteBuffer buffer = ByteBuffer.allocate(128);
+        int read = 0;
+        try {
+            read = channel.read(buffer);
+        } catch (IOException e) {
+            removeClient(key);
+            return;
+        }
         if (read == -1){
             removeClient(key);
             return;
         }
-
-        buffer.flip();
-        byte[] bytes = new byte[buffer.limit()];
-        buffer.get(bytes);
-        String msg = new String(bytes);
-
+        String msg = new String(buffer.array()).trim();
         handlerMsg(channel, msg);
     }
 
     private void handlerMsg(SocketChannel channel, String msg) throws IOException {
-        assert msg != null && msg.length() > 0;
+        if (msg == null || msg.length() == 0){
+            return;
+        }
         if (msg.charAt(0) == '/'){
             if (msg.startsWith("/nick ")){
                 assert msg.length() >= 7;
-                String newName = msg.substring(6, msg.length() - 1);
+                String newName = msg.substring(6);
                 Client client = CLIENT_MAP.get(channel);
                 client.nick = newName;
                 channel.write(ByteBuffer.wrap(String.format("your nickname change to %s\n", newName).getBytes()));
@@ -105,7 +108,7 @@ public class SmallChat_Server {
 
         Client client = new Client(DEFAULT_NAME_PRE + CLIENT_MAP.size());
         CLIENT_MAP.put(sc, client);
-
+        System.out.println("用户连接成功, 当前在线用户数：" + CLIENT_MAP.size());
         sc.write(ByteBuffer.wrap("welcome to smallchat, use /nick <nick> to change your nickname\n".getBytes()));
     }
 
